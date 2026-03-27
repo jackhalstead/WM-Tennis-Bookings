@@ -1,18 +1,22 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
-type AdminBooking = {
+type Booking = {
   id: string;
   booking_date: string;
-  court: string;
+  court: "Court 1" | "Court 2";
   start_hour: number;
   end_hour: number;
   name: string;
-  contact: string | null;
-  created_at: string;
 };
+
+const COURTS = ["Court 1", "Court 2"] as const;
+const START_HOUR = 8;
+const END_HOUR = 20;
+const DAYS_AHEAD = 14;
+const APP_NAME = process.env.NEXT_PUBLIC_APP_NAME || "Community Tennis Court Bookings";
 
 function formatStorageDate(date: Date) {
   const year = date.getFullYear();
@@ -26,7 +30,6 @@ function formatDisplayDate(date: Date) {
     weekday: "short",
     day: "numeric",
     month: "short",
-    year: "numeric",
   }).format(date);
 }
 
@@ -36,42 +39,58 @@ function formatHour(hour: number) {
   return `${displayHour}:00${suffix}`;
 }
 
-function buildDayRange() {
+function buildDays() {
+  const items: Date[] = [];
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  const end = new Date(today);
-  end.setDate(today.getDate() + 14);
-  return {
-    start: formatStorageDate(today),
-    end: formatStorageDate(end),
-  };
+
+  for (let index = 0; index <= DAYS_AHEAD; index += 1) {
+    const date = new Date(today);
+    date.setDate(today.getDate() + index);
+    items.push(date);
+  }
+
+  return items;
 }
 
-export default function AdminPage() {
-  const range = useMemo(() => buildDayRange(), []);
-  const [adminKey, setAdminKey] = useState("");
-  const [bookings, setBookings] = useState<AdminBooking[]>([]);
-  const [loading, setLoading] = useState(false);
+function buildHours() {
+  return Array.from({ length: END_HOUR - START_HOUR }, (_, i) => START_HOUR + i);
+}
+
+function getBookingKey(date: string, court: string, hour: number) {
+  return `${date}__${court}__${hour}`;
+}
+
+export default function HomePage() {
+  const days = useMemo(() => buildDays(), []);
+  const hours = useMemo(() => buildHours(), []);
+  const [selectedDayIndex, setSelectedDayIndex] = useState(0);
+  const [bookings, setBookings] = useState<Record<string, Booking>>({});
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState<{ type: "error" | "success"; text: string } | null>(null);
-  const [deletingId, setDeletingId] = useState<string | null>(null);
-  const [savingId, setSavingId] = useState<string | null>(null);
+  const [form, setForm] = useState({ name: "", contact: "", website: "", court: "Court 1", startHour: 8 });
+
+  const startDate = formatStorageDate(days[0]);
+  const endDate = formatStorageDate(days[days.length - 1]);
+  const selectedDate = days[selectedDayIndex];
+  const selectedDateKey = formatStorageDate(selectedDate);
 
   async function loadBookings() {
     setLoading(true);
     setMessage(null);
 
     try {
-      const response = await fetch(`/api/bookings?start=${range.start}&end=${range.end}`, {
-        cache: "no-store",
-        headers: { "x-admin-key": adminKey },
-      });
+      const response = await fetch(`/api/bookings?start=${startDate}&end=${endDate}`, { cache: "no-store" });
       const payload = await response.json();
       if (!response.ok) throw new Error(payload.error || "Could not load bookings.");
 
-      setBookings(payload.bookings as AdminBooking[]);
-      setMessage({ type: "success", text: "Admin bookings loaded." });
+      const nextState: Record<string, Booking> = {};
+      for (const booking of payload.bookings as Booking[]) {
+        nextState[getBookingKey(booking.booking_date, booking.court, booking.start_hour)] = booking;
+      }
+      setBookings(nextState);
     } catch (error) {
-      setBookings([]);
       setMessage({
         type: "error",
         text: error instanceof Error ? error.message : "Could not load bookings.",
@@ -81,181 +100,237 @@ export default function AdminPage() {
     }
   }
 
-  function updateBookingField(id: string, field: "name" | "contact", value: string) {
-    setBookings((current) =>
-      current.map((booking) => (booking.id === id ? { ...booking, [field]: value } : booking)),
-    );
-  }
+  useEffect(() => {
+    loadBookings();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-  async function saveBooking(id: string) {
-    if (!adminKey) {
-      setMessage({ type: "error", text: "Enter the admin key first." });
-      return;
+  useEffect(() => {
+    const currentSelection = bookings[getBookingKey(selectedDateKey, form.court, Number(form.startHour))];
+    if (!currentSelection) return;
+
+    const firstFreeHour = hours.find((hour) => !bookings[getBookingKey(selectedDateKey, form.court, hour)]);
+    if (typeof firstFreeHour === "number") {
+      setForm((current) => ({ ...current, startHour: firstFreeHour }));
     }
+  }, [bookings, form.court, form.startHour, hours, selectedDateKey]);
 
-    const booking = bookings.find((item) => item.id === id);
-    if (!booking) return;
-
-    setSavingId(id);
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setSubmitting(true);
     setMessage(null);
 
     try {
-      const response = await fetch(`/api/bookings/${id}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          "x-admin-key": adminKey,
-        },
+      const response = await fetch("/api/bookings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          name: booking.name,
-          contact: booking.contact || "",
+          bookingDate: selectedDateKey,
+          court: form.court,
+          startHour: Number(form.startHour),
+          endHour: Number(form.startHour) + 1,
+          name: form.name,
+          contact: form.contact,
+          website: form.website,
         }),
       });
-      const payload = await response.json();
-      if (!response.ok) throw new Error(payload.error || "Could not save booking.");
 
-      setBookings((current) => current.map((item) => (item.id === id ? (payload.booking as AdminBooking) : item)));
-      setMessage({ type: "success", text: "Booking updated." });
+      const payload = await response.json();
+      if (!response.ok) throw new Error(payload.error || "Could not create booking.");
+
+      const booking: Booking = payload.booking;
+      setBookings((current) => ({
+        ...current,
+        [getBookingKey(booking.booking_date, booking.court, booking.start_hour)]: booking,
+      }));
+      setForm({ name: "", contact: "", website: "", court: "Court 1", startHour: 8 });
+      setMessage({ type: "success", text: "Booking confirmed." });
     } catch (error) {
       setMessage({
         type: "error",
-        text: error instanceof Error ? error.message : "Could not save booking.",
+        text: error instanceof Error ? error.message : "Could not create booking.",
       });
     } finally {
-      setSavingId(null);
+      setSubmitting(false);
     }
   }
 
-  async function deleteBooking(id: string) {
-    if (!adminKey) {
-      setMessage({ type: "error", text: "Enter the admin key first." });
-      return;
-    }
-
-    const confirmed = window.confirm("Delete this booking?");
-    if (!confirmed) return;
-
-    setDeletingId(id);
-    setMessage(null);
-
-    try {
-      const response = await fetch(`/api/bookings/${id}`, {
-        method: "DELETE",
-        headers: { "x-admin-key": adminKey },
-      });
-      const payload = await response.json();
-      if (!response.ok) throw new Error(payload.error || "Could not delete booking.");
-
-      setBookings((current) => current.filter((booking) => booking.id !== id));
-      setMessage({ type: "success", text: "Booking deleted." });
-    } catch (error) {
-      setMessage({
-        type: "error",
-        text: error instanceof Error ? error.message : "Could not delete booking.",
-      });
-    } finally {
-      setDeletingId(null);
-    }
+  function slotIsBooked(court: string, hour: number) {
+    return bookings[getBookingKey(selectedDateKey, court, hour)];
   }
+
+  const selectedSlotBooked = Boolean(slotIsBooked(form.court, Number(form.startHour)));
+  const allSlotsBookedForCourt = hours.every((hour) => Boolean(slotIsBooked(form.court, hour)));
 
   return (
     <main className="page">
-      <div className="shell admin-shell">
+      <div className="shell">
         <section className="card header">
           <div className="topbar">
             <div>
-              <h1>Booking Admin</h1>
-              <p>Load bookings for today plus 14 days ahead and edit contact details or delete bookings when needed.</p>
+              <h1>{APP_NAME}</h1>
+              <p>
+                Book one-hour tennis court slots for today and the next 14 days. No account is needed.
+              </p>
             </div>
-            <Link href="/" className="secondary nav-link">
-              Back to booking page
+            <Link href="/admin" className="secondary nav-link">
+              Admin
             </Link>
+          </div>
+          <div className="badges">
+            <span className="badge">2 courts</span>
+            <span className="badge">8am to 8pm</span>
+            <span className="badge">15-day rolling view</span>
+            <span className="badge">Contact optional</span>
+          </div>
+        </section>
+
+        <section className="card">
+          <div className="day-strip">
+            {days.map((day, index) => (
+              <button
+                key={formatStorageDate(day)}
+                className={`day-button ${index === selectedDayIndex ? "active" : ""}`}
+                onClick={() => setSelectedDayIndex(index)}
+                type="button"
+              >
+                <span className="day-meta">Day {index + 1}</span>
+                <strong>{formatDisplayDate(day)}</strong>
+              </button>
+            ))}
           </div>
         </section>
 
         {message ? <div className={`notice ${message.type}`}>{message.text}</div> : null}
 
         <section className="card form-card">
-          <h2>Admin access</h2>
-          <p className="muted">Enter the same ADMIN_DELETE_KEY value you added in Vercel and your local environment file.</p>
-          <div className="form">
+          <h2>Reserve a slot for {formatDisplayDate(selectedDate)}</h2>
+          <p className="muted">Choose a court and a free one-hour slot, then enter your name. Contact details are optional.</p>
+          <form className="form" onSubmit={handleSubmit}>
             <label className="label">
-              Admin key
+              Court
+              <select
+                className="select"
+                value={form.court}
+                onChange={(event) => setForm((current) => ({ ...current, court: event.target.value as "Court 1" | "Court 2" }))}
+              >
+                {COURTS.map((court) => (
+                  <option key={court} value={court}>
+                    {court}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label className="label">
+              Start time
+              <select
+                className="select"
+                value={form.startHour}
+                onChange={(event) => setForm((current) => ({ ...current, startHour: Number(event.target.value) }))}
+                disabled={allSlotsBookedForCourt}
+              >
+                {hours.map((hour) => {
+                  const booking = slotIsBooked(form.court, hour);
+                  return (
+                    <option key={hour} value={hour} disabled={Boolean(booking)}>
+                      {formatHour(hour)} to {formatHour(hour + 1)}{booking ? " — booked" : ""}
+                    </option>
+                  );
+                })}
+              </select>
+            </label>
+
+            <label className="label">
+              Your name
               <input
                 className="input"
-                type="password"
-                value={adminKey}
-                onChange={(event) => setAdminKey(event.target.value)}
-                placeholder="Enter admin key"
+                required
+                maxLength={80}
+                value={form.name}
+                onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))}
+                placeholder="Enter your name"
               />
             </label>
+
+            <label className="label">
+              Phone or email
+              <input
+                className="input"
+                maxLength={120}
+                value={form.contact}
+                onChange={(event) => setForm((current) => ({ ...current, contact: event.target.value }))}
+                placeholder="Optional phone number or email"
+              />
+            </label>
+
+            <label className="label" style={{ display: "none" }} aria-hidden="true">
+              Website
+              <input
+                className="input"
+                tabIndex={-1}
+                autoComplete="off"
+                value={form.website}
+                onChange={(event) => setForm((current) => ({ ...current, website: event.target.value }))}
+                placeholder="Leave empty"
+              />
+            </label>
+
+            {allSlotsBookedForCourt ? (
+              <div className="notice error">All slots for {form.court} are booked on this date. Please choose the other court or another day.</div>
+            ) : null}
+            {!allSlotsBookedForCourt && selectedSlotBooked ? (
+              <div className="notice error">That slot is no longer available. Please choose another time.</div>
+            ) : null}
+
             <div className="actions">
-              <button className="primary" type="button" onClick={loadBookings} disabled={loading || !adminKey}>
-                {loading ? "Loading..." : "Load bookings"}
+              <button className="primary" disabled={submitting || allSlotsBookedForCourt || selectedSlotBooked} type="submit">
+                {submitting ? "Booking..." : "Confirm booking"}
+              </button>
+              <button className="secondary" disabled={loading} type="button" onClick={loadBookings}>
+                Refresh availability
               </button>
             </div>
-          </div>
+          </form>
         </section>
 
-        <section className="card form-card">
-          <h2>Bookings</h2>
-          <p className="muted">Showing bookings from {formatDisplayDate(new Date(`${range.start}T00:00:00`))} to {formatDisplayDate(new Date(`${range.end}T00:00:00`))}.</p>
+        <section className="courts">
+          {COURTS.map((court) => (
+            <section key={court} className="card court">
+              <h2>{court}</h2>
+              {loading ? (
+                <div className="spinner">Loading availability...</div>
+              ) : (
+                <div className="slots">
+                  {hours.map((hour) => {
+                    const booking = slotIsBooked(court, hour);
+                    return (
+                      <button key={`${court}-${hour}`} className="slot" disabled type="button">
+                        <div>
+                          <div className="slot-title">
+                            {formatHour(hour)} to {formatHour(hour + 1)}
+                          </div>
+                          <div className="slot-subtitle">
+                            {booking ? `Booked by ${booking.name}` : "Available"}
+                          </div>
+                        </div>
+                        <span className={`pill ${booking ? "booked" : ""}`}>{booking ? "Booked" : "Free"}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </section>
+          ))}
+        </section>
 
-          {bookings.length === 0 ? (
-            <div className="empty-state">No bookings loaded yet.</div>
-          ) : (
-            <div className="admin-list">
-              {bookings.map((booking) => (
-                <article key={booking.id} className="admin-booking admin-booking-editable">
-                  <div className="admin-booking-main">
-                    <h3>
-                      {booking.court} · {formatDisplayDate(new Date(`${booking.booking_date}T00:00:00`))}
-                    </h3>
-                    <p>
-                      {formatHour(booking.start_hour)} to {formatHour(booking.end_hour)}
-                    </p>
-                    <label className="label compact-label">
-                      Name
-                      <input
-                        className="input"
-                        maxLength={80}
-                        value={booking.name}
-                        onChange={(event) => updateBookingField(booking.id, "name", event.target.value)}
-                      />
-                    </label>
-                    <label className="label compact-label">
-                      Contact
-                      <input
-                        className="input"
-                        maxLength={120}
-                        value={booking.contact || ""}
-                        onChange={(event) => updateBookingField(booking.id, "contact", event.target.value)}
-                        placeholder="Optional phone number"
-                      />
-                    </label>
-                  </div>
-                  <div className="admin-actions">
-                    <button
-                      className="secondary"
-                      type="button"
-                      onClick={() => saveBooking(booking.id)}
-                      disabled={savingId === booking.id}
-                    >
-                      {savingId === booking.id ? "Saving..." : "Save changes"}
-                    </button>
-                    <button
-                      className="danger"
-                      type="button"
-                      onClick={() => deleteBooking(booking.id)}
-                      disabled={deletingId === booking.id}
-                    >
-                      {deletingId === booking.id ? "Deleting..." : "Delete booking"}
-                    </button>
-                  </div>
-                </article>
-              ))}
-            </div>
-          )}
+        <section className="card info">
+          <p>
+            Bookings are stored in Supabase and served through secure server-side API routes, which makes this ready to deploy on Vercel.
+          </p>
+          <p>
+            Need to cancel or remove a booking? Use the admin page with your admin key.
+          </p>
         </section>
       </div>
     </main>
