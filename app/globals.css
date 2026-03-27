@@ -56,11 +56,11 @@ button {
 }
 
 .mobile-shell {
-  max-width: 760px;
+  max-width: 480px;
 }
 
 .admin-shell {
-  max-width: 920px;
+  max-width: 480px;
 }
 
 .card {
