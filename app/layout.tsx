@@ -3,7 +3,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "West Meon Tennis Court Bookings",
-  description: "Community tennis court bookings",
+  description: "West Meon Tennis Court Bookings",
 };
 
 export const viewport: Viewport = {
