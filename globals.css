@@ -1,0 +1,335 @@
+:root {
+  --background: #f8fafc;
+  --card: #ffffff;
+  --border: #dbe3ea;
+  --text: #0f172a;
+  --muted: #516173;
+  --primary: #0f766e;
+  --primary-soft: #ccfbf1;
+  --danger: #b91c1c;
+  --success: #166534;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--background);
+  color: var(--text);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button,
+input,
+select {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+.page {
+  min-height: 100vh;
+  padding: 16px;
+}
+
+.shell {
+  max-width: 1120px;
+  margin: 0 auto;
+  display: grid;
+  gap: 16px;
+}
+
+.admin-shell {
+  max-width: 920px;
+}
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+}
+
+.header {
+  padding: 20px;
+}
+
+.header h1 {
+  margin: 0;
+  font-size: 1.8rem;
+}
+
+.header p {
+  margin: 8px 0 0;
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+.topbar {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.badge {
+  border-radius: 999px;
+  padding: 8px 12px;
+  background: #f1f5f9;
+  color: #1e293b;
+  font-size: 0.92rem;
+}
+
+.day-strip {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding: 14px;
+}
+
+.day-button {
+  min-width: 116px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: #fff;
+  padding: 12px;
+}
+
+.day-button.active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+}
+
+.day-meta {
+  display: block;
+  font-size: 0.8rem;
+  opacity: 0.85;
+  margin-bottom: 4px;
+}
+
+.courts {
+  display: grid;
+  gap: 16px;
+}
+
+.court {
+  padding: 18px;
+}
+
+.court h2 {
+  margin: 0 0 14px;
+  font-size: 1.2rem;
+}
+
+.slots {
+  display: grid;
+  gap: 10px;
+}
+
+.slot {
+  width: 100%;
+  text-align: left;
+  border-radius: 16px;
+  padding: 14px;
+  border: 1px solid var(--border);
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.slot:hover:not(:disabled) {
+  border-color: #94a3b8;
+}
+
+.slot:disabled {
+  cursor: not-allowed;
+  background: #f8fafc;
+}
+
+.slot-title {
+  font-weight: 700;
+}
+
+.slot-subtitle {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 0.94rem;
+}
+
+.pill {
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 7px 11px;
+  white-space: nowrap;
+  background: #fff;
+}
+
+.pill.booked {
+  background: #e2e8f0;
+}
+
+.info {
+  padding: 16px 18px;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.info p {
+  margin: 0;
+}
+
+.info p + p {
+  margin-top: 8px;
+}
+
+.notice {
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: #f8fafc;
+  border: 1px solid var(--border);
+  color: var(--muted);
+}
+
+.notice.error {
+  border-color: #fecaca;
+  background: #fef2f2;
+  color: var(--danger);
+}
+
+.notice.success {
+  border-color: #bbf7d0;
+  background: #f0fdf4;
+  color: var(--success);
+}
+
+.form {
+  display: grid;
+  gap: 12px;
+}
+
+.label {
+  display: grid;
+  gap: 6px;
+  font-weight: 700;
+}
+
+.input,
+.select {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 12px 14px;
+  background: #fff;
+}
+
+.actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.primary,
+.secondary,
+.danger {
+  border-radius: 14px;
+  padding: 12px 16px;
+  border: 1px solid var(--border);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.primary {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+}
+
+.secondary {
+  background: white;
+}
+
+.danger {
+  background: #fef2f2;
+  color: var(--danger);
+  border-color: #fecaca;
+}
+
+.form-card {
+  padding: 18px;
+}
+
+.form-card h2 {
+  margin-top: 0;
+  margin-bottom: 10px;
+}
+
+.muted {
+  color: var(--muted);
+}
+
+.nav-link {
+  min-width: 96px;
+}
+
+.empty-state {
+  border: 1px dashed var(--border);
+  border-radius: 16px;
+  padding: 20px;
+  color: var(--muted);
+}
+
+.admin-list {
+  display: grid;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.admin-booking {
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.admin-booking h3 {
+  margin: 0 0 6px;
+  font-size: 1.05rem;
+}
+
+.admin-booking p {
+  margin: 4px 0;
+  color: var(--muted);
+}
+
+@media (min-width: 860px) {
+  .courts {
+    grid-template-columns: 1fr 1fr;
+  }
+}
