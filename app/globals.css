@@ -23,15 +23,20 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
-a {
-  color: inherit;
-  text-decoration: none;
+body {
+  -webkit-font-smoothing: antialiased;
 }
 
 button,
 input,
-select {
+select,
+textarea {
   font: inherit;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
 }
 
 button {
@@ -40,14 +45,18 @@ button {
 
 .page {
   min-height: 100vh;
-  padding: 16px;
+  padding: 12px;
 }
 
 .shell {
   max-width: 1120px;
   margin: 0 auto;
   display: grid;
-  gap: 16px;
+  gap: 14px;
+}
+
+.mobile-shell {
+  max-width: 760px;
 }
 
 .admin-shell {
@@ -62,18 +71,19 @@ button {
 }
 
 .header {
-  padding: 20px;
+  padding: 18px;
 }
 
 .header h1 {
   margin: 0;
-  font-size: 1.8rem;
+  font-size: 1.5rem;
+  line-height: 1.2;
 }
 
 .header p {
   margin: 8px 0 0;
   color: var(--muted);
-  line-height: 1.4;
+  line-height: 1.45;
 }
 
 .topbar {
@@ -84,6 +94,10 @@ button {
   flex-wrap: wrap;
 }
 
+.topbar-mobile {
+  align-items: center;
+}
+
 .badges {
   display: flex;
   flex-wrap: wrap;
@@ -91,27 +105,44 @@ button {
   margin-top: 14px;
 }
 
-.badge {
+.badge,
+.availability-pill {
   border-radius: 999px;
   padding: 8px 12px;
   background: #f1f5f9;
   color: #1e293b;
   font-size: 0.92rem;
+  white-space: nowrap;
+}
+
+.sticky-controls {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  padding: 10px;
+  backdrop-filter: blur(6px);
 }
 
 .day-strip {
   display: flex;
   gap: 10px;
   overflow-x: auto;
-  padding: 14px;
+  padding-bottom: 6px;
+  scrollbar-width: thin;
+}
+
+.day-strip-mobile {
+  padding: 2px 2px 10px;
 }
 
 .day-button {
-  min-width: 116px;
+  min-width: 110px;
   border: 1px solid var(--border);
   border-radius: 16px;
   background: #fff;
   padding: 12px;
+  text-align: left;
+  flex: 0 0 auto;
 }
 
 .day-button.active {
@@ -122,35 +153,73 @@ button {
 
 .day-meta {
   display: block;
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   opacity: 0.85;
   margin-bottom: 4px;
 }
 
-.courts {
+.court-toggle {
+  margin-top: 8px;
   display: grid;
-  gap: 16px;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
 }
 
-.court {
+.court-tab {
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: #fff;
+  padding: 14px 12px;
+  font-weight: 700;
+}
+
+.court-tab.active {
+  border-color: var(--primary);
+  background: var(--primary-soft);
+  color: #115e59;
+}
+
+.schedule-card,
+.form-card {
   padding: 18px;
 }
 
+.schedule-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.schedule-heading h2,
+.form-card h2,
 .court h2 {
-  margin: 0 0 14px;
+  margin: 0;
   font-size: 1.2rem;
+}
+
+.schedule-heading p,
+.muted {
+  margin: 6px 0 0;
+  color: var(--muted);
+  line-height: 1.45;
 }
 
 .slots {
   display: grid;
+  gap: 12px;
+}
+
+.mobile-slots {
   gap: 10px;
 }
 
 .slot {
   width: 100%;
   text-align: left;
-  border-radius: 16px;
-  padding: 14px;
+  border-radius: 18px;
+  padding: 16px;
   border: 1px solid var(--border);
   background: #fff;
   display: flex;
@@ -159,13 +228,28 @@ button {
   gap: 12px;
 }
 
-.slot:hover:not(:disabled) {
-  border-color: #94a3b8;
+.mobile-slot {
+  min-height: 78px;
 }
 
+.slot.available:hover:not(:disabled) {
+  border-color: #7c8ea3;
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.06);
+}
+
+.slot.selected {
+  border-color: var(--primary);
+  background: #f0fdfa;
+}
+
+.slot.booked,
 .slot:disabled {
   cursor: not-allowed;
   background: #f8fafc;
+}
+
+.slot-main {
+  min-width: 0;
 }
 
 .slot-title {
@@ -181,19 +265,29 @@ button {
 .pill {
   border: 1px solid var(--border);
   border-radius: 999px;
-  padding: 7px 11px;
+  padding: 8px 12px;
   white-space: nowrap;
   background: #fff;
+  font-size: 0.92rem;
 }
 
 .pill.booked {
   background: #e2e8f0;
 }
 
+.pill.selected,
+.pill.free {
+  background: #f8fafc;
+}
+
 .info {
   padding: 16px 18px;
   color: var(--muted);
   line-height: 1.45;
+}
+
+.mobile-info {
+  margin-bottom: 12px;
 }
 
 .info p {
@@ -240,8 +334,24 @@ button {
   width: 100%;
   border: 1px solid var(--border);
   border-radius: 14px;
-  padding: 12px 14px;
+  padding: 13px 14px;
   background: #fff;
+}
+
+.selected-slot-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin: 12px 0;
+}
+
+.selected-slot-summary span,
+.selected-slot-summary strong {
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 8px 12px;
+  background: #f8fafc;
 }
 
 .actions {
@@ -250,86 +360,128 @@ button {
   flex-wrap: wrap;
 }
 
+.actions-stacked-mobile {
+  display: grid;
+  gap: 10px;
+}
+
 .primary,
 .secondary,
 .danger {
   border-radius: 14px;
-  padding: 12px 16px;
+  padding: 13px 16px;
   border: 1px solid var(--border);
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  min-height: 48px;
 }
 
 .primary {
   background: var(--primary);
-  color: white;
   border-color: var(--primary);
+  color: #fff;
 }
 
 .secondary {
-  background: white;
+  background: #fff;
 }
 
 .danger {
-  background: #fef2f2;
+  background: #fff;
   color: var(--danger);
   border-color: #fecaca;
 }
 
-.form-card {
-  padding: 18px;
-}
-
-.form-card h2 {
-  margin-top: 0;
-  margin-bottom: 10px;
-}
-
-.muted {
-  color: var(--muted);
+.wide-button {
+  width: 100%;
 }
 
 .nav-link {
-  min-width: 96px;
+  white-space: nowrap;
 }
 
-.empty-state {
-  border: 1px dashed var(--border);
+.empty-state,
+.spinner {
+  padding: 16px;
   border-radius: 16px;
-  padding: 20px;
+  background: #f8fafc;
   color: var(--muted);
 }
 
 .admin-list {
   display: grid;
   gap: 12px;
-  margin-top: 14px;
+  margin-top: 12px;
 }
 
 .admin-booking {
   border: 1px solid var(--border);
-  border-radius: 16px;
+  border-radius: 18px;
   padding: 16px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  flex-wrap: wrap;
+  display: grid;
+  gap: 12px;
 }
 
 .admin-booking h3 {
-  margin: 0 0 6px;
-  font-size: 1.05rem;
+  margin: 0;
+  font-size: 1rem;
 }
 
 .admin-booking p {
-  margin: 4px 0;
+  margin: 6px 0 0;
   color: var(--muted);
 }
 
-@media (min-width: 860px) {
-  .courts {
-    grid-template-columns: 1fr 1fr;
+.compact-label {
+  margin-top: 12px;
+}
+
+.admin-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+@media (min-width: 640px) {
+  .page {
+    padding: 18px;
+  }
+
+  .header {
+    padding: 22px;
+  }
+
+  .schedule-card,
+  .form-card {
+    padding: 22px;
+  }
+
+  .actions-stacked-mobile {
+    display: flex;
+  }
+
+  .wide-button {
+    width: auto;
+  }
+}
+
+@media (min-width: 900px) {
+  .page {
+    padding: 24px;
+  }
+
+  .sticky-controls {
+    top: 12px;
+    padding: 14px;
+  }
+
+  .header h1 {
+    font-size: 1.8rem;
+  }
+
+  .court-tab,
+  .day-button {
+    min-height: 64px;
   }
 }

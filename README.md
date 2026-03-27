@@ -72,3 +72,12 @@ Your app will then be available via a public link.
 - Add rate limiting
 - Add resident rules such as one booking per person per day
 - Add a simple audit log for admin deletes
+
+
+## Mobile UI update
+
+This version uses a mobile-first layout:
+- one court at a time on phones
+- larger tap targets for each slot
+- sticky date and court controls
+- selected slot summary above the booking form
