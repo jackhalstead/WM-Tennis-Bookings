@@ -192,7 +192,7 @@ export default function HomePage() {
           <div className="topbar topbar-mobile">
             <div>
               <h1>{APP_NAME}</h1>
-              <p>Tennis court booking for members. Choose a day, choose a court, tap a free time and confirm the booking.</p>
+              <p>Tennis court booking for members. Choose a day, choose a court, tap a free time and confirm the booking. Booking available up to 14 days in advance</p>
             </div>
             <Link href="/admin" className="secondary nav-link">
               Admin
