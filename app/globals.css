@@ -44,24 +44,20 @@ button {
 }
 
 .page {
-  min-height: 100vh;
   padding: 8px;
 }
 
-.shell {
-  width:100%;
+.shell,
+.mobile-shell {
+  width: 100%;
   max-width: 480px;
   margin: 0 auto;
-  display: grid;
-  gap: 14px;
-}
-
-.mobile-shell {
-  max-width: 480px;
 }
 
 .admin-shell {
+  width: 100%;
   max-width: 920px;
+  margin: 0 auto;
 }
 
 .card {
