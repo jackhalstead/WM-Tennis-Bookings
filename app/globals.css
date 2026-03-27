@@ -49,7 +49,7 @@ button {
 }
 
 .shell {
-  max-width: 1120px;
+  max-width: 480px;
   margin: 0 auto;
   display: grid;
   gap: 14px;
